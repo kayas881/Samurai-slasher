@@ -3,6 +3,7 @@
 #include <SDL_image.h>
 #include <iostream>
 #include "Entity.hpp"
+#include <SDL_ttf.h>
 class RenderWindow
 {
     public:
@@ -16,9 +17,16 @@ class RenderWindow
     void render(Entity& p_entity);
     void display();
 
+    // Getters
+    SDL_Renderer* getRenderer() { return renderer; }
+    SDL_Window* getWindow() { return window; }
+    TTF_Font* getFont() { return font; }
+    
+
     private:
     SDL_Window* window;
     SDL_Renderer*  renderer;
+    TTF_Font* font;
 
 
 };
