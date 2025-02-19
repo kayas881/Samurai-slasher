@@ -19,8 +19,11 @@ bool NPC::isPlayerNearby(const Player& player) {
 
 void NPC::interact(DialogueSystem& dialogueSystem) {
     if (!dialogueSystem.isActive()) {
-        dialogueSystem.resetDialogue();  // ✅ Reset if NPC is interacted with again
         dialogueSystem.startDialogue("Old Man", dialogues);
+        dialogueSystem.resetDialogue();  // ✅ Reset if NPC is interacted with again
     }
 }
 
+SDL_Texture* NPC::getTexture() const {
+    return text;  // ✅ Return the current texture
+}

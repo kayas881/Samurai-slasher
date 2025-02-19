@@ -9,6 +9,8 @@ public:
     void setDialogue(std::vector<std::string> dialogueLines);
     void interact(DialogueSystem& dialogueSystem);
     bool isPlayerNearby(const Player& player);  
+    SDL_Texture* getTexture() const;  // ✅ Add this function
+
 
 private:
     std::vector<std::string> dialogues;

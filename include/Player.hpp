@@ -23,4 +23,5 @@ private:
     SDL_Texture* runningTexture;
     SDL_Texture* shieldTexture;
     PlayerState currentState;
+    bool isFacingLeft = false;
 };

@@ -17,7 +17,7 @@ DialogueSystem::DialogueSystem(SDL_Renderer* p_renderer, TTF_Font* p_font)
         if (!active || dialogueLines.empty()) return;
     
         // Define box dimensions
-        SDL_Rect boxRect = {100, 450, 600, 100};  // x, y, width, height
+        SDL_Rect boxRect = {230, 600, 800, 100};  // x, y, width, height
     
         // Set box color (black with transparency)
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 150);  // RGBA (black with alpha)
@@ -29,7 +29,7 @@ DialogueSystem::DialogueSystem(SDL_Renderer* p_renderer, TTF_Font* p_font)
         // Render NPC Name (above dialogue box)
         SDL_Surface* nameSurface = TTF_RenderText_Solid(font, npcName.c_str(), {255, 255, 0});  // Yellow name
         SDL_Texture* nameTexture = SDL_CreateTextureFromSurface(renderer, nameSurface);
-        SDL_Rect nameRect = {110, 420, nameSurface->w, nameSurface->h};  // Position above box
+        SDL_Rect nameRect = {240, 570, nameSurface->w, nameSurface->h};  // Position above box
         SDL_RenderCopy(renderer, nameTexture, nullptr, &nameRect);
         SDL_FreeSurface(nameSurface);
         SDL_DestroyTexture(nameTexture);
@@ -37,7 +37,7 @@ DialogueSystem::DialogueSystem(SDL_Renderer* p_renderer, TTF_Font* p_font)
         // Render dialogue text inside the box
         SDL_Surface* textSurface = TTF_RenderText_Solid(font, dialogueLines[currentLine].c_str(), textColor);
         SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-        SDL_Rect textRect = {110, 470, textSurface->w, textSurface->h};  // Position inside box
+        SDL_Rect textRect = {240, 620, textSurface->w, textSurface->h};  // Position inside box
         SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
         SDL_FreeSurface(textSurface);
         SDL_DestroyTexture(textTexture);

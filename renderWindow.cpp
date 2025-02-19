@@ -15,7 +15,7 @@ RenderWindow::RenderWindow(const char *p_title, int p_w, int p_h)
     }
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     
-    font = TTF_OpenFont("res/fonts/Freedom-10eM.ttf", 24); // Adjust the path and size as needed
+    font = TTF_OpenFont("res/fonts/PixelEmulator-xq08.ttf", 24); // Adjust the path and size as needed
     if (font == nullptr)
     {
         std::cout << "Failed to load font. Error: " << TTF_GetError() << std::endl;

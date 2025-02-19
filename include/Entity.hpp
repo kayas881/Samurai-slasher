@@ -51,5 +51,8 @@ class Entity{
   
   float walkSpeed = 0.3f;
   float runSpeed = 0.6f;
-
+  float jumpSpeed = 0.1f;
+  float gravity = 980.0f; // Gravity value
+  float verticalVelocity = 0.0f; // Vertical velocity
+  bool onGround = true; // Flag to check if the player is on the ground
 };

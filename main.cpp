@@ -10,11 +10,13 @@
 #include "include/npc.hpp"
 #include <SDL_ttf.h>
 #include "include/DialogueSystem.hpp"
+
 // Create dialogue system instance
 std::vector<NPC> npcs;
+
 void setupNPCs(std::vector<NPC>& npcs, RenderWindow& window) {
     SDL_Texture* npcTexture = window.loadTexture("res/NPC/Idle.png");
-
+   
     NPC npc1({150, 50}, npcTexture, 6, 128, 128);
     npc1.setDialogue({
         "Hello, traveler!",          
@@ -22,12 +24,79 @@ void setupNPCs(std::vector<NPC>& npcs, RenderWindow& window) {
         "Do you need help?"
     });
 
-
     npcs.push_back(npc1);
 }
 
-int main(int argc, char* argv[])
-{
+Vector2f calculateDirection(const Vector2f& from, const Vector2f& to) {
+    Vector2f direction = { to.x - from.x, to.y - from.y };
+    float length = sqrt(direction.x * direction.x + direction.y * direction.y);
+    if (length != 0) {
+        direction.x /= length;
+        direction.y /= length;
+    }
+    return direction;
+}
+
+void handleEvents(bool& gameRunning, Player& player, DialogueSystem& dialogueSystem, std::vector<NPC>& npcs) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) {
+            gameRunning = false;
+        }
+        player.handleInput(event);
+        dialogueSystem.handleInput(event);
+
+        if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_e) {
+            for (NPC& npc : npcs) {
+                if (npc.isPlayerNearby(player)) {
+                    npc.interact(dialogueSystem);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void updateNPCs(std::vector<NPC>& npcs, Player& player, SDL_Texture* npcLeftTexture, SDL_Texture* npcTexture, float frameTime) {
+    for (NPC& npc : npcs) {
+        if (npc.isPlayerNearby(player)) {
+            Vector2f npcDirection = calculateDirection(npc.getPos(), player.getPos());
+            SDL_Texture* newTexture = (npcDirection.x < 0) ? npcLeftTexture : npcTexture;
+
+            if (npc.getTexture() != newTexture) {
+                npc.setTexture(newTexture);
+                npc.setFrameCount(6);
+                npc.setFrameSize(128, 128);
+                npc.setAnimationSpeed(0.05f);
+                npc.resetAnimation();
+            }
+        } else {
+            SDL_Texture* newTexture = npcTexture;
+            if (npc.getTexture() != newTexture) {
+                npc.setTexture(newTexture);
+                npc.setFrameCount(6);
+                npc.setFrameSize(128, 128);
+                npc.setAnimationSpeed(0.05f);
+                npc.resetAnimation();
+            }
+        }
+
+        npc.updateAnimation(frameTime);
+    }
+}
+
+void renderGame(RenderWindow& window, SDL_Texture* skyTexture, Player& player, std::vector<NPC>& npcs, DialogueSystem& dialogueSystem) {
+    window.clear();
+    window.renderSky(skyTexture);
+    window.render(player);
+    for (NPC& npc : npcs) {
+        window.render(npc);
+    }
+    dialogueSystem.renderDialogue();
+    window.display();
+}
+
+int main(int argc, char* argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "HEY... SDL_INIT HAS FAILED. SDL_ERROR: " << SDL_GetError() << std::endl;
     }
@@ -41,9 +110,6 @@ int main(int argc, char* argv[])
 
     RenderWindow window("Creamy kayas Engine v0.1", 1280, 720);
 
-    
-
-    
     DialogueSystem dialogueSystem(window.getRenderer(), window.getFont());
 
     SDL_Texture *skyTexture = window.loadTexture("res/ComfyUI_00062_.png");
@@ -54,73 +120,50 @@ int main(int argc, char* argv[])
     SDL_Texture *runningTexture = window.loadTexture("res/player/Run.png");
     SDL_Texture *shieldTexture = window.loadTexture("res/player/Shield.png");
 
+    SDL_Texture* npcLeftTexture = window.loadTexture("res/NPC/leftIdle.png");
     SDL_Texture *npcTexture = window.loadTexture("res/NPC/Idle.png");
 
-
-    Player player({100, 50}, idleTexture, walkTexture, jumpTexture, attack1Texture, runningTexture,shieldTexture, 6, 128, 128);
-    player.setAnimationSpeed(0.05f);
+    Player player({100, 50}, idleTexture, walkTexture, jumpTexture, attack1Texture, runningTexture, shieldTexture, 6, 128, 128);
+    player.setAnimationSpeed(0.08f);
 
     bool gameRunning = true;
-    SDL_Event event;
-
     const float timeStep = 0.01f;
-    float accumulator = 0.01f;
+    float accumulator = 0.0f;
     float currentTime = utils::hireTimeInSeconds();
-    bool showDialogue = false;
-    std::string dialogueText = "";
-    
-    
+
     setupNPCs(npcs, window);
-    while(gameRunning){
+
+    while (gameRunning) {
         float newTime = utils::hireTimeInSeconds();
         float frameTime = newTime - currentTime;
         currentTime = newTime;
         accumulator += frameTime;
 
-        while(accumulator >= timeStep){
-            while (SDL_PollEvent(&event)) {
-                if (event.type == SDL_QUIT) {
-                    gameRunning = false;
-                }
-                player.handleInput(event);  // ✅ Player now handles its own input
-                dialogueSystem.handleInput(event);
+        handleEvents(gameRunning, player, dialogueSystem, npcs);
 
-
-                if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_e) {
-                    for (NPC& npc : npcs) {
-                        if (npc.isPlayerNearby(player)) {
-                            npc.interact(dialogueSystem);
-                            break;
-                        }
-                    }
-                }
-                
-            }
-
-            player.updateMovement(frameTime);  // ✅ Player moves itself
-            player.updateAnimation(frameTime);  // ✅ Player updates its own animation
-            for (NPC& npc : npcs) {
-                npc.updateAnimation(frameTime);
-            }
+        while (accumulator >= timeStep) {
+            player.updateMovement(timeStep);
+            player.updateAnimation(timeStep);
+            updateNPCs(npcs, player, npcLeftTexture, npcTexture, timeStep);
             accumulator -= timeStep;
         }
 
-        window.clear();
-        window.renderSky(skyTexture);
-        window.render(player);
-        for (NPC& npc : npcs) {
-            window.render(npc);
-        }
-        dialogueSystem.renderDialogue();  // ✅ Now dialogue is displayed in the game
-
-        window.display();
+        renderGame(window, skyTexture, player, npcs, dialogueSystem);
     }
 
     SDL_DestroyTexture(skyTexture);
     SDL_DestroyTexture(idleTexture);
+    SDL_DestroyTexture(walkTexture);
+    SDL_DestroyTexture(jumpTexture);
     SDL_DestroyTexture(attack1Texture);
-    SDL_Quit();
+    SDL_DestroyTexture(runningTexture);
+    SDL_DestroyTexture(shieldTexture);
+    SDL_DestroyTexture(npcTexture);
+
+    TTF_CloseFont(window.getFont());
+    TTF_Quit();
     IMG_Quit();
+    SDL_Quit();
 
     return 0;
 }

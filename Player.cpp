@@ -143,6 +143,7 @@ void Player::updateMovement(float deltaTime) {
             getPos().x += currentSpeed;
         }
     }
+     
 }
 
 void Player::updateAnimation(float deltaTime) {
