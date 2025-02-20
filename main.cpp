@@ -10,12 +10,16 @@
 #include "include/npc.hpp"
 #include <SDL_ttf.h>
 #include "include/DialogueSystem.hpp"
-
-// Create dialogue system instance
+#include "include/TextureManager.hpp"
+#include "include/EventManager.hpp"
+#include "include/utils.hpp"
+#include "include/SpatialPartitioning.hpp"
 std::vector<NPC> npcs;
 
-void setupNPCs(std::vector<NPC>& npcs, RenderWindow& window) {
-    SDL_Texture* npcTexture = window.loadTexture("res/NPC/Idle.png");
+SpatialPartitioning spatialPartitioning(1280, 720, 200);  // Adjust cell size as needed
+
+void setupNPCs(std::vector<NPC>& npcs, RenderWindow& window, SpatialPartitioning& spatialPartitioning) {
+    SDL_Texture* npcTexture = TextureManager::loadTexture("res/NPC/Idle.png", window.getRenderer());
    
     NPC npc1({150, 50}, npcTexture, 6, 128, 128);
     npc1.setDialogue({
@@ -25,63 +29,40 @@ void setupNPCs(std::vector<NPC>& npcs, RenderWindow& window) {
     });
 
     npcs.push_back(npc1);
+    spatialPartitioning.addNPC(&npc1);
 }
 
-Vector2f calculateDirection(const Vector2f& from, const Vector2f& to) {
-    Vector2f direction = { to.x - from.x, to.y - from.y };
-    float length = sqrt(direction.x * direction.x + direction.y * direction.y);
-    if (length != 0) {
-        direction.x /= length;
-        direction.y /= length;
-    }
-    return direction;
-}
-
-void handleEvents(bool& gameRunning, Player& player, DialogueSystem& dialogueSystem, std::vector<NPC>& npcs) {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_QUIT) {
-            gameRunning = false;
-        }
-        player.handleInput(event);
-        dialogueSystem.handleInput(event);
-
-        if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_e) {
-            for (NPC& npc : npcs) {
-                if (npc.isPlayerNearby(player)) {
-                    npc.interact(dialogueSystem);
-                    break;
-                }
-            }
-        }
-    }
-}
-
-void updateNPCs(std::vector<NPC>& npcs, Player& player, SDL_Texture* npcLeftTexture, SDL_Texture* npcTexture, float frameTime) {
+void updateNPCs(SpatialPartitioning& spatialPartitioning, Player& player, SDL_Texture* npcLeftTexture, SDL_Texture* npcTexture, float frameTime) {
+    spatialPartitioning.clear();
     for (NPC& npc : npcs) {
-        if (npc.isPlayerNearby(player)) {
-            Vector2f npcDirection = calculateDirection(npc.getPos(), player.getPos());
+        spatialPartitioning.addNPC(&npc);
+    }
+
+    std::vector<NPC*> nearbyNPCs = spatialPartitioning.getNearbyNPCs(player);
+    for (NPC* npc : nearbyNPCs) {
+        if (npc->isPlayerNearby(player)) {
+            Vector2f npcDirection = utills::calculateDirection(npc->getPos(), player.getPos());
             SDL_Texture* newTexture = (npcDirection.x < 0) ? npcLeftTexture : npcTexture;
 
-            if (npc.getTexture() != newTexture) {
-                npc.setTexture(newTexture);
-                npc.setFrameCount(6);
-                npc.setFrameSize(128, 128);
-                npc.setAnimationSpeed(0.05f);
-                npc.resetAnimation();
+            if (npc->getTexture() != newTexture) {
+                npc->setTexture(newTexture);
+                npc->setFrameCount(6);
+                npc->setFrameSize(128, 128);
+                npc->setAnimationSpeed(0.05f);
+                npc->resetAnimation();
             }
         } else {
             SDL_Texture* newTexture = npcTexture;
-            if (npc.getTexture() != newTexture) {
-                npc.setTexture(newTexture);
-                npc.setFrameCount(6);
-                npc.setFrameSize(128, 128);
-                npc.setAnimationSpeed(0.05f);
-                npc.resetAnimation();
+            if (npc->getTexture() != newTexture) {
+                npc->setTexture(newTexture);
+                npc->setFrameCount(6);
+                npc->setFrameSize(128, 128);
+                npc->setAnimationSpeed(0.05f);
+                npc->resetAnimation();
             }
         }
 
-        npc.updateAnimation(frameTime);
+        npc->updateAnimation(frameTime);
     }
 }
 
@@ -112,18 +93,20 @@ int main(int argc, char* argv[]) {
 
     DialogueSystem dialogueSystem(window.getRenderer(), window.getFont());
 
-    SDL_Texture *skyTexture = window.loadTexture("res/ComfyUI_00062_.png");
-    SDL_Texture *idleTexture = window.loadTexture("res/player/Idle.png");
-    SDL_Texture *walkTexture = window.loadTexture("res/player/Walk.png");
-    SDL_Texture *jumpTexture = window.loadTexture("res/player/Jump.png");
-    SDL_Texture *attack1Texture = window.loadTexture("res/player/Attack_1.png");
-    SDL_Texture *runningTexture = window.loadTexture("res/player/Run.png");
-    SDL_Texture *shieldTexture = window.loadTexture("res/player/Shield.png");
+    SDL_Texture *skyTexture = TextureManager::loadTexture("res/ComfyUI_00062_.png", window.getRenderer());
+    SDL_Texture *idleTexture = TextureManager::loadTexture("res/player/Idle.png", window.getRenderer());
 
-    SDL_Texture* npcLeftTexture = window.loadTexture("res/NPC/leftIdle.png");
-    SDL_Texture *npcTexture = window.loadTexture("res/NPC/Idle.png");
-
-    Player player({100, 50}, idleTexture, walkTexture, jumpTexture, attack1Texture, runningTexture, shieldTexture, 6, 128, 128);
+    SDL_Texture *walkTexture = TextureManager::loadTexture("res/player/Walk.png", window.getRenderer());
+    SDL_Texture *jumpTexture = TextureManager::loadTexture("res/player/Jump.png", window.getRenderer());
+    SDL_Texture *attack1Texture = TextureManager::loadTexture("res/player/Attack_1.png", window.getRenderer());
+    SDL_Texture *runningTexture = TextureManager::loadTexture("res/player/Run.png", window.getRenderer());
+    SDL_Texture *shieldTexture = TextureManager::loadTexture("res/player/Shield.png", window.getRenderer());
+    SDL_Texture *hurtTexture = TextureManager::loadTexture("res/player/Hurt.png", window.getRenderer());
+    SDL_Texture* npcLeftTexture = TextureManager::loadTexture("res/NPC/leftIdle.png", window.getRenderer());
+    SDL_Texture *npcTexture = TextureManager::loadTexture("res/NPC/Idle.png", window.getRenderer());
+    SDL_Texture *deadTexture = TextureManager::loadTexture("res/player/Dead.png", window.getRenderer());
+ 
+    Player player({100, 50}, idleTexture, walkTexture, jumpTexture, attack1Texture, runningTexture, shieldTexture,hurtTexture,deadTexture, 6, 128, 128);
     player.setAnimationSpeed(0.08f);
 
     bool gameRunning = true;
@@ -131,34 +114,25 @@ int main(int argc, char* argv[]) {
     float accumulator = 0.0f;
     float currentTime = utils::hireTimeInSeconds();
 
-    setupNPCs(npcs, window);
+    setupNPCs(npcs, window, spatialPartitioning);
 
     while (gameRunning) {
         float newTime = utils::hireTimeInSeconds();
         float frameTime = newTime - currentTime;
         currentTime = newTime;
         accumulator += frameTime;
-
-        handleEvents(gameRunning, player, dialogueSystem, npcs);
-
+        EventManager::processEvents(gameRunning, player, dialogueSystem, npcs);
         while (accumulator >= timeStep) {
             player.updateMovement(timeStep);
             player.updateAnimation(timeStep);
-            updateNPCs(npcs, player, npcLeftTexture, npcTexture, timeStep);
+            updateNPCs(spatialPartitioning, player, npcLeftTexture, npcTexture, timeStep);
             accumulator -= timeStep;
         }
 
         renderGame(window, skyTexture, player, npcs, dialogueSystem);
     }
 
-    SDL_DestroyTexture(skyTexture);
-    SDL_DestroyTexture(idleTexture);
-    SDL_DestroyTexture(walkTexture);
-    SDL_DestroyTexture(jumpTexture);
-    SDL_DestroyTexture(attack1Texture);
-    SDL_DestroyTexture(runningTexture);
-    SDL_DestroyTexture(shieldTexture);
-    SDL_DestroyTexture(npcTexture);
+    TextureManager::cleanup();
 
     TTF_CloseFont(window.getFont());
     TTF_Quit();

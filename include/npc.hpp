@@ -1,3 +1,4 @@
+#pragma once
 #include "Entity.hpp"
 #include "DialogueSystem.hpp"
 #include <vector>

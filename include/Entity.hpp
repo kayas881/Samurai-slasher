@@ -24,6 +24,7 @@ class Entity{
     Entity(Vector2f p_pos, SDL_Texture* p_text, int frameCount = 1, int frameWidth = 128, int frameHeight=128);
 
     Vector2f& getPos() { return pos; }
+    const Vector2f& getPos() const { return pos; } // Const overload
     SDL_Texture* getText() { return text; }
     SDL_Rect getCurrentFrame() { return currentFrame; }
 
@@ -51,8 +52,5 @@ class Entity{
   
   float walkSpeed = 0.3f;
   float runSpeed = 0.6f;
-  float jumpSpeed = 0.1f;
-  float gravity = 980.0f; // Gravity value
-  float verticalVelocity = 0.0f; // Vertical velocity
-  bool onGround = true; // Flag to check if the player is on the ground
+
 };
