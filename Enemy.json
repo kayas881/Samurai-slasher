@@ -1,0 +1,15 @@
+{
+    "textures": {
+        "idle": "res/Enemy/Idle.png",
+        "walk": "res/Enemy/Walk.png",
+        "attack": "res/Enemy/Attack_1.png",
+        "hurt": "res/Enemy/Hurt.png",
+        "dead": "res/Enemy/Dead.png"
+    },
+    "stats": {
+        "hp": 10,
+        "attack_power": 15,
+        "defense": 3,
+        "speed": 120
+    }
+}

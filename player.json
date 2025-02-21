@@ -1,0 +1,21 @@
+{
+    "textures": {
+      "idle": "res/player/Idle.png",
+      "walk": "res/player/Walk.png",
+      "jump": "res/player/Jump.png",
+      "attack": "res/player/Attack_1.png",
+      "run": "res/player/Run.png",
+      "shield": "res/player/Shield.png",
+      "hurt": "res/player/Hurt.png",
+      "dead": "res/player/Dead.png"
+    },
+    "stats": {
+      "hp": 200,
+      "attack_power": 10,
+      "defense": 5,
+      "speed": 200,
+      "jump_velocity": -350,
+      "gravity": 280
+    }
+  }
+  

@@ -14,9 +14,13 @@
 #include "include/EventManager.hpp"
 #include "include/utils.hpp"
 #include "include/SpatialPartitioning.hpp"
+#include "include/Enemy.hpp"
 std::vector<NPC> npcs;
 
 SpatialPartitioning spatialPartitioning(1280, 720, 200);  // Adjust cell size as needed
+
+// Define the enemy object
+Enemy enemy({50, 50}, nullptr, "Enemy.json");
 
 void setupNPCs(std::vector<NPC>& npcs, RenderWindow& window, SpatialPartitioning& spatialPartitioning) {
     SDL_Texture* npcTexture = TextureManager::loadTexture("res/NPC/Idle.png", window.getRenderer());
@@ -32,7 +36,7 @@ void setupNPCs(std::vector<NPC>& npcs, RenderWindow& window, SpatialPartitioning
     spatialPartitioning.addNPC(&npc1);
 }
 
-void updateNPCs(SpatialPartitioning& spatialPartitioning, Player& player, SDL_Texture* npcLeftTexture, SDL_Texture* npcTexture, float frameTime) {
+void updateNPCs(SpatialPartitioning& spatialPartitioning, Player& player, float frameTime) {
     spatialPartitioning.clear();
     for (NPC& npc : npcs) {
         spatialPartitioning.addNPC(&npc);
@@ -41,41 +45,27 @@ void updateNPCs(SpatialPartitioning& spatialPartitioning, Player& player, SDL_Te
     std::vector<NPC*> nearbyNPCs = spatialPartitioning.getNearbyNPCs(player);
     for (NPC* npc : nearbyNPCs) {
         if (npc->isPlayerNearby(player)) {
-            Vector2f npcDirection = utills::calculateDirection(npc->getPos(), player.getPos());
-            SDL_Texture* newTexture = (npcDirection.x < 0) ? npcLeftTexture : npcTexture;
-
-            if (npc->getTexture() != newTexture) {
-                npc->setTexture(newTexture);
-                npc->setFrameCount(6);
-                npc->setFrameSize(128, 128);
-                npc->setAnimationSpeed(0.05f);
-                npc->resetAnimation();
-            }
-        } else {
-            SDL_Texture* newTexture = npcTexture;
-            if (npc->getTexture() != newTexture) {
-                npc->setTexture(newTexture);
-                npc->setFrameCount(6);
-                npc->setFrameSize(128, 128);
-                npc->setAnimationSpeed(0.05f);
-                npc->resetAnimation();
-            }
+            npc->setDirection(utills::calculateDirection(npc->getPos(), player.getPos()));
         }
-
         npc->updateAnimation(frameTime);
     }
 }
 
-void renderGame(RenderWindow& window, SDL_Texture* skyTexture, Player& player, std::vector<NPC>& npcs, DialogueSystem& dialogueSystem) {
+void renderGame(RenderWindow& window, SDL_Texture* skyTexture, Player& player, Enemy& enemy, std::vector<NPC>& npcs, DialogueSystem& dialogueSystem) {
     window.clear();
     window.renderSky(skyTexture);
-    window.render(player);
+
     for (NPC& npc : npcs) {
-        window.render(npc);
+        bool nearby = npc.isPlayerNearby(player);
+        npc.render(window, nearby);
     }
+
+    window.render(enemy);  // ✅ Render enemy first
+    window.render(player); // ✅ Player on top, fixing overlap
     dialogueSystem.renderDialogue();
     window.display();
 }
+
 
 int main(int argc, char* argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -90,24 +80,16 @@ int main(int argc, char* argv[]) {
     }
 
     RenderWindow window("Creamy kayas Engine v0.1", 1280, 720);
-
     DialogueSystem dialogueSystem(window.getRenderer(), window.getFont());
 
     SDL_Texture *skyTexture = TextureManager::loadTexture("res/ComfyUI_00062_.png", window.getRenderer());
-    SDL_Texture *idleTexture = TextureManager::loadTexture("res/player/Idle.png", window.getRenderer());
-
-    SDL_Texture *walkTexture = TextureManager::loadTexture("res/player/Walk.png", window.getRenderer());
-    SDL_Texture *jumpTexture = TextureManager::loadTexture("res/player/Jump.png", window.getRenderer());
-    SDL_Texture *attack1Texture = TextureManager::loadTexture("res/player/Attack_1.png", window.getRenderer());
-    SDL_Texture *runningTexture = TextureManager::loadTexture("res/player/Run.png", window.getRenderer());
-    SDL_Texture *shieldTexture = TextureManager::loadTexture("res/player/Shield.png", window.getRenderer());
-    SDL_Texture *hurtTexture = TextureManager::loadTexture("res/player/Hurt.png", window.getRenderer());
-    SDL_Texture* npcLeftTexture = TextureManager::loadTexture("res/NPC/leftIdle.png", window.getRenderer());
     SDL_Texture *npcTexture = TextureManager::loadTexture("res/NPC/Idle.png", window.getRenderer());
-    SDL_Texture *deadTexture = TextureManager::loadTexture("res/player/Dead.png", window.getRenderer());
  
-    Player player({100, 50}, idleTexture, walkTexture, jumpTexture, attack1Texture, runningTexture, shieldTexture,hurtTexture,deadTexture, 6, 128, 128);
+    Player player({100, 50}, window.getRenderer(), "player.json");
     player.setAnimationSpeed(0.08f);
+
+    enemy = Enemy({50, 50}, window.getRenderer(), "Enemy.json");
+    enemy.setAnimationSpeed(0.08f);
 
     bool gameRunning = true;
     const float timeStep = 0.01f;
@@ -125,11 +107,12 @@ int main(int argc, char* argv[]) {
         while (accumulator >= timeStep) {
             player.updateMovement(timeStep);
             player.updateAnimation(timeStep);
-            updateNPCs(spatialPartitioning, player, npcLeftTexture, npcTexture, timeStep);
+            updateNPCs(spatialPartitioning, player, timeStep);
+            enemy.updateAI(timeStep, player.getPos());  // Enemy moves towards player
             accumulator -= timeStep;
         }
 
-        renderGame(window, skyTexture, player, npcs, dialogueSystem);
+        renderGame(window, skyTexture, player,enemy, npcs, dialogueSystem);
     }
 
     TextureManager::cleanup();

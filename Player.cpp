@@ -1,11 +1,36 @@
 #include "include/Player.hpp"
+#include "include/TextureManager.hpp"
+#include <fstream>
 
-Player::Player(Vector2f p_pos, SDL_Texture *idleTexture, SDL_Texture *walkTexture, SDL_Texture *jumpTexture, SDL_Texture *attackTexture, SDL_Texture *runningTexture,
-               SDL_Texture *shieldTexture, SDL_Texture *hurtTexture, SDL_Texture *deadTexture, int frameCount, int frameWidth, int frameHeight)
-    : Entity(p_pos, idleTexture, frameCount, frameWidth, frameHeight),
-      idleTexture(idleTexture), walkTexture(walkTexture), jumpTexture(jumpTexture), attackTexture(attackTexture),
-      runningTexture(runningTexture), shieldTexture(shieldTexture), hurtTexture(hurtTexture), deadTexture(deadTexture),
-      currentState(PlayerState::Idle), jumpVelocity(0.0f), gravity(280.0f), isJumping(false), groundLevel(p_pos.y) {}
+// Declare the enemy object as external
+extern Enemy enemy;
+
+Player::Player(Vector2f p_pos, SDL_Renderer* renderer, const std::string& configPath)
+    : Entity(p_pos, nullptr, 1, 128, 128), attackPower(10) {  // Initialize attackPower
+    std::ifstream file(configPath);
+    nlohmann::json config;
+    file >> config;
+
+    idleTexture = TextureManager::loadTexture(config["textures"]["idle"], renderer);
+    walkTexture = TextureManager::loadTexture(config["textures"]["walk"], renderer);
+    jumpTexture = TextureManager::loadTexture(config["textures"]["jump"], renderer);
+    attackTexture = TextureManager::loadTexture(config["textures"]["attack"], renderer);
+    runningTexture = TextureManager::loadTexture(config["textures"]["run"], renderer);
+    shieldTexture = TextureManager::loadTexture(config["textures"]["shield"], renderer);
+    hurtTexture = TextureManager::loadTexture(config["textures"]["hurt"], renderer);
+    deadTexture = TextureManager::loadTexture(config["textures"]["dead"], renderer);
+
+    hp = config["stats"]["hp"];
+    jumpVelocity = config["stats"]["jump_velocity"];
+    gravity = config["stats"]["gravity"];
+    groundLevel = p_pos.y;
+    currentState = PlayerState::Idle;
+    isJumping = false;
+    isDead = false;
+
+    setTexture(idleTexture);  // Set initial texture to idle
+    setFrameCount(6);         // Set initial frame count for idle texture
+}
 
 void Player::handleInput(const SDL_Event &event)
 {
@@ -220,21 +245,49 @@ void Player::updateMovement(float deltaTime)
             setState(PlayerState::Idle); // Return to idle state after landing
         }
     }
+
+    // Collision detection with enemy
+    if (checkCollisionWithEnemy()) {
+        takeDamage(attackPower);
+    }
 }
 
-void Player::updateAnimation(float deltaTime)
-{
-    if (isDead && animationFinished()) return;  // ❌ Stop animation updates after death
-    Entity::updateAnimation(deltaTime);
-    if (currentState == PlayerState::Dead) return; // ✅ Don't reset to Idle after death
-    if (currentState == PlayerState::Dead && animationFinished())
-    {
-        // Stop updating the animation if the player is dead and the animation has finished
-        return;
+// New method to check collision with enemy
+bool Player::checkCollisionWithEnemy() {
+    // Get player and enemy positions and dimensions
+    SDL_Rect playerRect = { static_cast<int>(getPos().x), static_cast<int>(getPos().y), getWidth(), getHeight() };
+    SDL_Rect enemyRect = { static_cast<int>(enemy.getPos().x), static_cast<int>(enemy.getPos().y), 128, 128 };
+
+    // Check for collision
+    return SDL_HasIntersection(&playerRect, &enemyRect);
+}
+
+// New method to handle damage
+void Player::takeDamage(int damage) {
+    hp -= damage;
+    if (hp <= 0) {
+        setState(PlayerState::Dead);
+    } else {
+        setState(PlayerState::Hurt);
     }
-    // If Jump or Attack finishes, return to Idle
-    if ((currentState == PlayerState::Jumping || currentState == PlayerState::Attacking) || currentState == PlayerState::Hurt && animationFinished())
-    {
+}
+
+void Player::updateAnimation(float deltaTime) {
+    if (isDead && animationFinished()) return;  // ❌ Stop animation updates after death
+
+    Entity::updateAnimation(deltaTime);
+
+    if (currentState == PlayerState::Dead) return; // ✅ Don't reset to Idle after death
+
+    if ((currentState == PlayerState::Jumping || currentState == PlayerState::Attacking || currentState == PlayerState::Hurt) && animationFinished()) {
         setState(PlayerState::Idle);
     }
+}
+
+int Player::getWidth() const {
+    return 128;  // Return the width of the player
+}
+
+int Player::getHeight() const {
+    return 128;  // Return the height of the player
 }

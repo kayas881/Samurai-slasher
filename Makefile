@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = main.cpp RenderWindow.cpp Entity.cpp Player.cpp npc.cpp DialogueSystem.cpp TextureManager.cpp EventManager.cpp utils.cpp SpatialPartitioning.cpp
+OBJS = main.cpp RenderWindow.cpp Entity.cpp Player.cpp npc.cpp DialogueSystem.cpp TextureManager.cpp EventManager.cpp utils.cpp SpatialPartitioning.cpp Enemy.cpp
  
 #CC specifies which compiler we're using
 CC = g++

@@ -3,6 +3,7 @@
 #include "DialogueSystem.hpp"
 #include <vector>
 #include <string>
+#include "renderWindow.hpp"
 class Player;
 class NPC : public Entity {
 public:
@@ -11,8 +12,10 @@ public:
     void interact(DialogueSystem& dialogueSystem);
     bool isPlayerNearby(const Player& player);  
     SDL_Texture* getTexture() const;  // ✅ Add this function
-
+    void render(RenderWindow& window, bool isPlayerNearby);
+    void setDirection(const Vector2f& newDirection);  // Add this setter method
 
 private:
     std::vector<std::string> dialogues;
+    Vector2f direction;  // Store the direction of the NPC
 };
