@@ -23,6 +23,7 @@ Player::Player(Vector2f p_pos, SDL_Renderer* renderer, const std::string& config
     hp = config["stats"]["hp"];
     jumpVelocity = config["stats"]["jump_velocity"];
     gravity = config["stats"]["gravity"];
+    attackPower = config["stats"]["attack_power"];
     groundLevel = p_pos.y;
     currentState = PlayerState::Idle;
     isJumping = false;
@@ -94,6 +95,7 @@ void Player::handleInput(const SDL_Event &event)
         if (currentState != PlayerState::Attacking)
         { // Only trigger once
             setState(PlayerState::Attacking);
+            isAtacking = true;
         }
         break;
     case SDL_BUTTON_RIGHT:
@@ -245,32 +247,8 @@ void Player::updateMovement(float deltaTime)
             setState(PlayerState::Idle); // Return to idle state after landing
         }
     }
-
-    // Collision detection with enemy
-    if (checkCollisionWithEnemy()) {
-        takeDamage(attackPower);
-    }
 }
 
-// New method to check collision with enemy
-bool Player::checkCollisionWithEnemy() {
-    // Get player and enemy positions and dimensions
-    SDL_Rect playerRect = { static_cast<int>(getPos().x), static_cast<int>(getPos().y), getWidth(), getHeight() };
-    SDL_Rect enemyRect = { static_cast<int>(enemy.getPos().x), static_cast<int>(enemy.getPos().y), 128, 128 };
-
-    // Check for collision
-    return SDL_HasIntersection(&playerRect, &enemyRect);
-}
-
-// New method to handle damage
-void Player::takeDamage(int damage) {
-    hp -= damage;
-    if (hp <= 0) {
-        setState(PlayerState::Dead);
-    } else {
-        setState(PlayerState::Hurt);
-    }
-}
 
 void Player::updateAnimation(float deltaTime) {
     if (isDead && animationFinished()) return;  // ❌ Stop animation updates after death
@@ -281,13 +259,6 @@ void Player::updateAnimation(float deltaTime) {
 
     if ((currentState == PlayerState::Jumping || currentState == PlayerState::Attacking || currentState == PlayerState::Hurt) && animationFinished()) {
         setState(PlayerState::Idle);
+        isAtacking = false;
     }
-}
-
-int Player::getWidth() const {
-    return 128;  // Return the width of the player
-}
-
-int Player::getHeight() const {
-    return 128;  // Return the height of the player
 }

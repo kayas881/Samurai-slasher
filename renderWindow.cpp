@@ -23,21 +23,6 @@ RenderWindow::RenderWindow(const char *p_title, int p_w, int p_h)
 
 }
 
-
-
-SDL_Texture *RenderWindow::loadTexture(const char *p_filePath)
-{
-    SDL_Texture *texture = NULL;
-    texture = IMG_LoadTexture(renderer, p_filePath);
-
-    if (texture == NULL)
-    {
-        std::cout << "Failed to load texture. ERROR: " << SDL_GetError() << std::endl;
-    }
-
-    return texture;
-}
-
 int RenderWindow::getRefreshRate()
 {
     int displayIndex = SDL_GetWindowDisplayIndex(window);

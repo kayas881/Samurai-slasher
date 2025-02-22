@@ -19,9 +19,6 @@ std::vector<NPC> npcs;
 
 SpatialPartitioning spatialPartitioning(1280, 720, 200);  // Adjust cell size as needed
 
-// Define the enemy object
-Enemy enemy({50, 50}, nullptr, "Enemy.json");
-
 void setupNPCs(std::vector<NPC>& npcs, RenderWindow& window, SpatialPartitioning& spatialPartitioning) {
     SDL_Texture* npcTexture = TextureManager::loadTexture("res/NPC/Idle.png", window.getRenderer());
    
@@ -59,9 +56,8 @@ void renderGame(RenderWindow& window, SDL_Texture* skyTexture, Player& player, E
         bool nearby = npc.isPlayerNearby(player);
         npc.render(window, nearby);
     }
-
-    window.render(enemy);  // ✅ Render enemy first
-    window.render(player); // ✅ Player on top, fixing overlap
+    window.render(player); 
+    window.render(enemy);  
     dialogueSystem.renderDialogue();
     window.display();
 }
@@ -80,6 +76,7 @@ int main(int argc, char* argv[]) {
     }
 
     RenderWindow window("Creamy kayas Engine v0.1", 1280, 720);
+    
     DialogueSystem dialogueSystem(window.getRenderer(), window.getFont());
 
     SDL_Texture *skyTexture = TextureManager::loadTexture("res/ComfyUI_00062_.png", window.getRenderer());
@@ -88,7 +85,7 @@ int main(int argc, char* argv[]) {
     Player player({100, 50}, window.getRenderer(), "player.json");
     player.setAnimationSpeed(0.08f);
 
-    enemy = Enemy({50, 50}, window.getRenderer(), "Enemy.json");
+    Enemy enemy({200, 50}, window.getRenderer(), "Enemy.json");
     enemy.setAnimationSpeed(0.08f);
 
     bool gameRunning = true;
@@ -107,8 +104,12 @@ int main(int argc, char* argv[]) {
         while (accumulator >= timeStep) {
             player.updateMovement(timeStep);
             player.updateAnimation(timeStep);
+            Vector2f enemyDirection = utills::calculateDirection(enemy.getPos(), player.getPos());
+            float distanceToEnemy = utills::calculateDistance(player.getPos(), enemy.getPos());
+            enemy.updateAI(timeStep, distanceToEnemy, enemyDirection);
+            enemy.updateAnimation(timeStep,distanceToEnemy);
+            enemy.takeDamage(player,distanceToEnemy,timeStep);
             updateNPCs(spatialPartitioning, player, timeStep);
-            enemy.updateAI(timeStep, player.getPos());  // Enemy moves towards player
             accumulator -= timeStep;
         }
 

@@ -30,7 +30,7 @@ class Entity{
 
     int getFrameCount() const { return frameCount; }
     int getCurrentFrameIndex() const { return currentFrameIndex; }
-
+    bool checkCollision(const SDL_Rect& a, const SDL_Rect& b);
     // Animation functions
     void updateAnimation(float deltaTime);
     void setAnimationSpeed(float speed) { animationSpeed = speed; }
@@ -38,6 +38,7 @@ class Entity{
     void setFrameCount(int count);
     bool animationFinished() const;
     SDL_Rect getBoundingBox() const;
+
 
     void setFrameSize(int width, int height);  // Set frame size for animations
     void setAnimationRow(int row);             // Set animation row (e.g., for different states like idle, walk)

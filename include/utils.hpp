@@ -12,4 +12,10 @@ namespace utils {
 
 namespace utills {
     Vector2f calculateDirection(const Vector2f& from, const Vector2f& to);
+   inline float calculateDistance(const Vector2f &pos1, const Vector2f &pos2) {
+    float dx = pos2.x - pos1.x;
+    float dy = pos2.y - pos1.y;
+    return sqrt(dx * dx + dy * dy);
+   };
+
 }

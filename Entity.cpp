@@ -54,3 +54,7 @@ SDL_Rect Entity::getBoundingBox() const {
 void Entity::setFrameCount(int count) {
     frameCount = count;
 }
+
+bool Entity::checkCollision(const SDL_Rect& a, const SDL_Rect& b) {
+    return SDL_HasIntersection(&a, &b);
+}

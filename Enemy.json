@@ -7,8 +7,8 @@
         "dead": "res/Enemy/Dead.png"
     },
     "stats": {
-        "hp": 10,
-        "attack_power": 15,
+        "hp": 200,
+        "attack_power": 5,
         "defense": 3,
         "speed": 120
     }

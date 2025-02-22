@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include "json.hpp"
 #include "Enemy.hpp"
+#include "utils.hpp"
 enum class PlayerState { Idle, Walking, Jumping, Attacking, Running, Shielding, Hurt, Dead };
 
 class Player : public Entity {
@@ -14,13 +15,11 @@ public:
     void updateAnimation(float deltaTime);
     void setState(PlayerState newState);
 
-    int getWidth() const;  // New method to get player width
-    int getHeight() const; // New method to get player height
+    bool isPlayerAttacking() const { return isAtacking; }
+    int getAttackPower() const { return attackPower; }
+    
 
 private:
-    bool checkCollisionWithEnemy();
-    void takeDamage(int damage);
-
     SDL_Texture* idleTexture;
     SDL_Texture* walkTexture;
     SDL_Texture* jumpTexture;
@@ -35,6 +34,7 @@ private:
     float gravity;            // Gravity force pulling the character down
     bool isJumping;           // Whether the character is currently jumping
     float groundLevel;        // The Y position where the character stands (ground level)
-    float hp = 100;
+    float hp;
     int attackPower;          // New member variable for attack power
+    bool isAtacking = false;
 };
