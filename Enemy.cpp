@@ -30,15 +30,17 @@ Enemy::Enemy(Vector2f p_pos, SDL_Renderer* renderer, const std::string& configPa
 }
 
 // Enhanced AI movement and behavior
-void Enemy::updateAI(float deltaTime, float distanceToEnemy, Vector2f enemyDirection) {
+void Enemy::updateAI(float deltaTime, float distanceToEnemy, Vector2f enemyDirection, const Player& player) {
     if (isDead) return;  // ❌ Don't move if dead
+    Enemydirection = enemyDirection;  // ✅ Store the direction before moving
+
     if(isEnemyHurt) return; // ❌ Don't move if hurt
 
     if (attackCooldown > 0.0f) {
         attackCooldown -= deltaTime;
     }
     // Determine state
-    if (distanceToEnemy <= attackRange ) {
+    if (distanceToEnemy <= attackRange && !player.isPlayerMoving()) {
         if (currentState != EnemyState::Attak && attackCooldown <= 0.0f ) {
             setState(EnemyState::Attak);
             attackCooldown = attackCooldownDuration;
@@ -54,7 +56,7 @@ void Enemy::updateAI(float deltaTime, float distanceToEnemy, Vector2f enemyDirec
     }
 
     // Move only if walking
-    if (currentState == EnemyState::Walk) {
+    if (currentState == EnemyState::Walk && distanceToEnemy > attackRange) {
         pos.x += enemyDirection.x * speed * deltaTime;
         pos.y += enemyDirection.y * speed * deltaTime;
     }
@@ -100,7 +102,16 @@ void Enemy::setState(EnemyState newState) {
     }
 }
 
-
+bool Enemy::isPlayerNearby(const Player& player) {
+    SDL_Rect enemyBox = getBoundingBox();
+    SDL_Rect playerBox = player.getBoundingBox();
+    int distanceX = abs(playerBox.x - enemyBox.x);
+    int distanceY = abs(playerBox.y - enemyBox.y);
+    return (distanceX < 50 && distanceY < 50);
+}
+void Enemy::setDirection(const Vector2f& newDirection) {
+    Enemydirection = newDirection;
+}
 // ✅ Damage system
 void Enemy::takeDamage(Player &player, float distanceToEnemy, float deltaTime) {
     if (isDead) return; 
@@ -142,25 +153,38 @@ void Enemy::takeDamage(Player &player, float distanceToEnemy, float deltaTime) {
 
 void Enemy::updateAnimation(float deltaTime, float distanceToEnemy) {
     if (isDead && animationFinished()) return;
-
     Entity::updateAnimation(deltaTime);
-
     if (isDead) return;
-
-    // ✅ If attack animation finished, return to idle (respect cooldown)
-    if (currentState == EnemyState::Attak && animationFinished()) {
-        setState(EnemyState::Idle);
-    }
-
-    // ✅ If hurt animation finished, return to previous state
-    if (currentState == EnemyState::Hurt && animationFinished()) {
-        setState(EnemyState::Idle);
-    }
-
-    // ✅ If the player is far away, return to idle
-    if (currentState == EnemyState::Walk && distanceToEnemy > stopChaseDistance) {
-        setState(EnemyState::Idle);
+    switch (currentState) {
+        case EnemyState::Attak:
+            if (animationFinished()) setState(EnemyState::Idle);
+            break;
+        case EnemyState::Walk:
+            if (distanceToEnemy <= attackRange) {
+                setState(EnemyState::Attak);
+            } else if (distanceToEnemy > stopChaseDistance) {
+                setState(EnemyState::Idle);
+            }
+            break;
+        case EnemyState::Hurt:
+            if (animationFinished()) setState(EnemyState::Idle);
+            break;
+        default:
+            break;
     }
 }
 
 
+void Enemy::render(RenderWindow& window, bool isPlayerNearby) {
+    SDL_RendererFlip flip = (Enemydirection.x < 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+    
+    SDL_Rect src = getCurrentFrame();
+    SDL_Rect dst = {
+        static_cast<int>(getPos().x * 4),
+        static_cast<int>(getPos().y * 4),
+        static_cast<int>(getCurrentFrame().w * 4),
+        static_cast<int>(getCurrentFrame().h * 4)
+    };
+
+    SDL_RenderCopyEx(window.getRenderer(), getText(), &src, &dst, 0, NULL, flip);
+}

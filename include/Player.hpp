@@ -14,8 +14,9 @@ public:
     void updateMovement(float deltaTime);
     void updateAnimation(float deltaTime);
     void setState(PlayerState newState);
-
+    
     bool isPlayerAttacking() const { return isAtacking; }
+    bool isPlayerMoving() const { return isMovingg; }
     int getAttackPower() const { return attackPower; }
     
 
@@ -37,4 +38,5 @@ private:
     float hp;
     int attackPower;          // New member variable for attack power
     bool isAtacking = false;
+    bool isMovingg = false;
 };

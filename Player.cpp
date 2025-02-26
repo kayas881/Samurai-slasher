@@ -223,6 +223,7 @@ void Player::updateMovement(float deltaTime)
 
     if (isMoving)
     {
+        isMovingg = true;
         if (moveLeft)
         {
             getPos().x -= currentSpeed;
@@ -231,6 +232,9 @@ void Player::updateMovement(float deltaTime)
         {
             getPos().x += currentSpeed;
         }
+    }
+    else {
+        isMovingg = false;
     }
     if (isJumping)
     {
@@ -260,5 +264,6 @@ void Player::updateAnimation(float deltaTime) {
     if ((currentState == PlayerState::Jumping || currentState == PlayerState::Attacking || currentState == PlayerState::Hurt) && animationFinished()) {
         setState(PlayerState::Idle);
         isAtacking = false;
+        isMovingg = false;
     }
 }

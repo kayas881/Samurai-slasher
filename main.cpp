@@ -55,9 +55,12 @@ void renderGame(RenderWindow& window, SDL_Texture* skyTexture, Player& player, E
     for (NPC& npc : npcs) {
         bool nearby = npc.isPlayerNearby(player);
         npc.render(window, nearby);
+        
     }
+    
     window.render(player); 
-    window.render(enemy);  
+    bool isPlayerNearby = enemy.isPlayerNearby(player);
+    enemy.render(window, isPlayerNearby);
     dialogueSystem.renderDialogue();
     window.display();
 }
@@ -106,7 +109,7 @@ int main(int argc, char* argv[]) {
             player.updateAnimation(timeStep);
             Vector2f enemyDirection = utills::calculateDirection(enemy.getPos(), player.getPos());
             float distanceToEnemy = utills::calculateDistance(player.getPos(), enemy.getPos());
-            enemy.updateAI(timeStep, distanceToEnemy, enemyDirection);
+            enemy.updateAI(timeStep, distanceToEnemy, enemyDirection, player);
             enemy.updateAnimation(timeStep,distanceToEnemy);
             enemy.takeDamage(player,distanceToEnemy,timeStep);
             updateNPCs(spatialPartitioning, player, timeStep);
