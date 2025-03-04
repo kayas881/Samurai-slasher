@@ -12,21 +12,25 @@ Enemy::Enemy(Vector2f p_pos, SDL_Renderer* renderer, const std::string& configPa
     nlohmann::json config;
     file >> config;
 
-    // Load enemy textures
-    enemyIdleTexture = TextureManager::loadTexture(config["textures"]["idle"], renderer);
-    enemyWalkTexture = TextureManager::loadTexture(config["textures"]["walk"], renderer);
-    enemyAttackTexture = TextureManager::loadTexture(config["textures"]["attack"], renderer);
-    enemyHurtTexture = TextureManager::loadTexture(config["textures"]["hurt"], renderer);
-    enemyDeadTexture = TextureManager::loadTexture(config["textures"]["dead"], renderer);
+    loadTextures(renderer, config);
 
     // Load stats
-    hp = config["stats"]["hp"];
-    attackPower = config["stats"]["attack_power"];
-    defense = config["stats"]["defense"];
-    speed = config["stats"]["speed"];
+    stats.hp = config["stats"]["hp"];
+    stats.attackPower = config["stats"]["attack_power"];
+    stats.defense = config["stats"]["defense"];
+    stats.speed = config["stats"]["speed"];
+    
 
-    setTexture(enemyIdleTexture);  // Default state
+    setTexture(textures[EnemyState::Idle]);  // Default state
     setFrameCount(6);
+}
+
+void Enemy::loadTextures(SDL_Renderer* renderer, const nlohmann::json& config) {
+    textures[EnemyState::Idle] = TextureManager::loadTexture(config["textures"]["idle"], renderer);
+    textures[EnemyState::Walk] = TextureManager::loadTexture(config["textures"]["walk"], renderer);
+    textures[EnemyState::Attak] = TextureManager::loadTexture(config["textures"]["attack"], renderer);
+    textures[EnemyState::Hurt] = TextureManager::loadTexture(config["textures"]["hurt"], renderer);
+    textures[EnemyState::Dead] = TextureManager::loadTexture(config["textures"]["dead"], renderer);
 }
 
 // Enhanced AI movement and behavior
@@ -34,14 +38,20 @@ void Enemy::updateAI(float deltaTime, float distanceToEnemy, Vector2f enemyDirec
     if (isDead) return;  // ❌ Don't move if dead
     Enemydirection = enemyDirection;  // ✅ Store the direction before moving
 
-    if(isEnemyHurt) return; // ❌ Don't move if hurt
+    if (isEnemyHurt) return; // ❌ Don't move if hurt
 
     if (attackCooldown > 0.0f) {
         attackCooldown -= deltaTime;
     }
-    // Determine state
-    if (distanceToEnemy <= attackRange && !player.isPlayerMoving()) {
-        if (currentState != EnemyState::Attak && attackCooldown <= 0.0f ) {
+
+    handleStateTransitions(distanceToEnemy);
+    handleMovement(deltaTime, distanceToEnemy);
+}
+
+void Enemy::handleStateTransitions(float distanceToEnemy) {
+    if (distanceToEnemy <= attackRange) {
+        if (currentState != EnemyState::Attak && attackCooldown <= 0.0f) {
+            isMoving = false;  // Stop moving before attacking
             setState(EnemyState::Attak);
             attackCooldown = attackCooldownDuration;
         }
@@ -52,50 +62,48 @@ void Enemy::updateAI(float deltaTime, float distanceToEnemy, Vector2f enemyDirec
     } else {
         if (currentState != EnemyState::Walk && currentState != EnemyState::Attak) {
             setState(EnemyState::Walk);
+            isMoving = true;  // Ensure it keeps moving
         }
-    }
-
-    // Move only if walking
-    if (currentState == EnemyState::Walk && distanceToEnemy > attackRange) {
-        pos.x += enemyDirection.x * speed * deltaTime;
-        pos.y += enemyDirection.y * speed * deltaTime;
     }
 }
 
-// void Enemy::updateMovement(float deltaTime) {
-//     // ✅ Implement movement logic
-//     if(isDead) return;
-// }
+
+void Enemy::handleMovement(float deltaTime, float distanceToEnemy) {
+    if (currentState == EnemyState::Walk && distanceToEnemy > attackRange) {
+        if (!isMoving) isMoving = true; // Keep moving instead of toggling every frame
+        pos.x += Enemydirection.x * stats.speed * deltaTime;
+        pos.y += Enemydirection.y * stats.speed * deltaTime;
+    } else if (currentState == EnemyState::Attak) {
+        isMoving = false; // Stop movement only when attacking
+    }
+
+    std::cout<<"isMoving: "<<isMoving<<std::endl;
+}
+
+
 void Enemy::setState(EnemyState newState) {
     if (isDead) return;  // ❌ Ignore state changes if dead
     if (currentState == newState) return; // Prevent unnecessary updates
 
     currentState = newState;
+    setTexture(textures[newState]);  // Set texture based on the new state
+    resetAnimation();  // Reset animation when switching
+
     switch (newState)
     {
     case EnemyState::Idle:
-        setTexture(enemyIdleTexture);
         setFrameCount(6);
-        resetAnimation();  // ✅ Reset animation when switching
         break;
     case EnemyState::Walk:
-        setTexture(enemyWalkTexture);
         setFrameCount(8);
-        resetAnimation();  // ✅ Reset animation when switching
         break;
     case EnemyState::Attak:
-        setTexture(enemyAttackTexture);
         setFrameCount(4);
-        resetAnimation();
         break;
     case EnemyState::Hurt:
-       
-        setTexture(enemyHurtTexture);
         setFrameCount(3);
-        resetAnimation();
         break;
     case EnemyState::Dead:
-        setTexture(enemyDeadTexture);
         setFrameCount(3);
         isDead = true;
         break;
@@ -114,20 +122,24 @@ void Enemy::setDirection(const Vector2f& newDirection) {
 }
 // ✅ Damage system
 void Enemy::takeDamage(Player &player, float distanceToEnemy, float deltaTime) {
+    handleDamage(player, distanceToEnemy, deltaTime);
+}
+
+void Enemy::handleDamage(Player &player, float distanceToEnemy, float deltaTime) {
     if (isDead) return; 
 
     // ✅ Check if the enemy is in range and was hit
     if (player.isPlayerAttacking() && distanceToEnemy <= attackRange && checkCollision(player.getBoundingBox(), getBoundingBox())) {
         if (!hasTakenDamage) {  // ✅ Only take damage once per attack
             setState(EnemyState::Hurt);
-            hp -= std::max(0, player.getAttackPower() - defense);  // ✅ Prevent negative damage
-            std::cout << "Enemy HP: " << hp << std::endl;
+            stats.hp -= std::max(0, player.getAttackPower() - stats.defense);  // ✅ Prevent negative damage
+            std::cout << "Enemy HP: " << stats.hp << std::endl;
 
             isEnemyHurt = true;
             enemyHurtTime = 0.0f;  // ✅ Reset hurt timer
             hasTakenDamage = true;  // ✅ Mark this attack as applied
 
-            if (hp <= 0) {
+            if (stats.hp <= 0) {
                 setState(EnemyState::Dead);
                 std::cout << "Enemy defeated!" << std::endl;
             }
@@ -149,19 +161,23 @@ void Enemy::takeDamage(Player &player, float distanceToEnemy, float deltaTime) {
     }
 }
 
-
-
 void Enemy::updateAnimation(float deltaTime, float distanceToEnemy) {
+    handleAnimation(deltaTime, distanceToEnemy);
+}
+
+void Enemy::handleAnimation(float deltaTime, float distanceToEnemy) {
     if (isDead && animationFinished()) return;
     Entity::updateAnimation(deltaTime);
     if (isDead) return;
+
     switch (currentState) {
         case EnemyState::Attak:
             if (animationFinished()) setState(EnemyState::Idle);
             break;
         case EnemyState::Walk:
-            if (distanceToEnemy <= attackRange) {
+            if (distanceToEnemy <= attackRange && attackCooldown <= 0.0f) {
                 setState(EnemyState::Attak);
+                attackCooldown = attackCooldownDuration;
             } else if (distanceToEnemy > stopChaseDistance) {
                 setState(EnemyState::Idle);
             }
@@ -173,7 +189,6 @@ void Enemy::updateAnimation(float deltaTime, float distanceToEnemy) {
             break;
     }
 }
-
 
 void Enemy::render(RenderWindow& window, bool isPlayerNearby) {
     SDL_RendererFlip flip = (Enemydirection.x < 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;

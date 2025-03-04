@@ -220,7 +220,6 @@ void Player::updateMovement(float deltaTime)
 
     isMoving = moveLeft || moveRight;
     float currentSpeed = isRunning ? runSpeed : walkSpeed;
-
     if (isMoving)
     {
         isMovingg = true;
