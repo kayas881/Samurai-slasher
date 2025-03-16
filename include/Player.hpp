@@ -14,7 +14,7 @@ public:
     void updateMovement(float deltaTime);
     void updateAnimation(float deltaTime);
     void setState(PlayerState newState);
-    
+    bool isPlayerRunning() const;
     bool isPlayerAttacking() const { return isAtacking; }
     bool isPlayerMoving() const { return isMovingg; }
     int getAttackPower() const { return attackPower; }

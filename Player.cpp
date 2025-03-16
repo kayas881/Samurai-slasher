@@ -252,6 +252,9 @@ void Player::updateMovement(float deltaTime)
     }
 }
 
+bool Player::isPlayerRunning() const {
+    return isRunning;
+}
 
 void Player::updateAnimation(float deltaTime) {
     if (isDead && animationFinished()) return;  // ❌ Stop animation updates after death

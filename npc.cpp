@@ -33,6 +33,16 @@ void NPC::setDirection(const Vector2f& newDirection) {
     direction = newDirection;
 }
 
+void NPC::updateBehavior(const Player& player, float deltaTime) {
+    if (isPlayerNearby(player)) {
+        setDirection(utills::calculateDirection(getPos(), player.getPos()));
+        if (player.isPlayerAttacking()) {
+            // React to player's attack
+            std::cout << "NPC: Hey, watch it!" << std::endl;
+        }
+    }
+}
+
 void NPC::render(RenderWindow& window, bool isPlayerNearby) {
     SDL_RendererFlip flip = (isPlayerNearby && direction.x < 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
     SDL_Rect src = getCurrentFrame();

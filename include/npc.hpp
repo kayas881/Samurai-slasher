@@ -13,6 +13,7 @@ public:
     bool isPlayerNearby(const Player& player);  
     SDL_Texture* getTexture() const;  // ✅ Add this function
     void render(RenderWindow& window, bool isPlayerNearby);
+    void updateBehavior(const Player& player, float deltaTime);
     void setDirection(const Vector2f& newDirection);  // Add this setter method
 
 private:

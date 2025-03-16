@@ -35,8 +35,8 @@ public:
 
 private:
     void loadTextures(SDL_Renderer* renderer, const nlohmann::json& config);
-    void handleStateTransitions(float distanceToEnemy);
-    void handleMovement(float deltaTime, float distanceToEnemy);
+    void handleStateTransitions(float distanceToEnemy,const Player& player);
+    void handleMovement(float deltaTime, float distanceToEnemy,const Player& player);
     void handleDamage(Player &player, float distanceToEnemy, float deltaTime);
     void handleAnimation(float deltaTime, float distanceToEnemy);
 
@@ -55,5 +55,6 @@ private:
     bool isMoving = false;
     Vector2f Enemydirection;  // Store the direction of the NPC
     EnemyState currentState = EnemyState::Idle;
+    float originalSpeed;  // Store the original speed
 
 };
