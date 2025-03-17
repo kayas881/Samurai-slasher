@@ -1,5 +1,5 @@
-#include "include/Player.hpp"
-#include "include/TextureManager.hpp"
+#include "../include/Player.hpp"
+#include "../include/TextureManager.hpp"
 #include <fstream>
 
 // Declare the enemy object as external

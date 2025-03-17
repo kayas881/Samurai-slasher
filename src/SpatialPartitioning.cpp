@@ -1,4 +1,4 @@
-#include "include/SpatialPartitioning.hpp"
+#include "../include/SpatialPartitioning.hpp"
 
 SpatialPartitioning::SpatialPartitioning(int width, int height, int cellSize)
     : width(width), height(height), cellSize(cellSize) {

@@ -1,5 +1,5 @@
-#include "include/npc.hpp"
-#include "include/Player.hpp"
+#include "../include/npc.hpp"
+#include "../include/Player.hpp"
 
 NPC::NPC(Vector2f p_pos, SDL_Texture* p_texture, int p_frameCount, int p_frameWidth, int p_frameHeight)
     : Entity(p_pos, p_texture, p_frameCount, p_frameWidth, p_frameHeight) {}

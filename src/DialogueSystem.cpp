@@ -1,4 +1,4 @@
-#include "include/DialogueSystem.hpp"
+#include "../include/DialogueSystem.hpp"
 
 DialogueSystem::DialogueSystem(SDL_Renderer* p_renderer, TTF_Font* p_font)
     : renderer(p_renderer), font(p_font), currentLine(0), active(false) {}

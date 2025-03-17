@@ -1,4 +1,4 @@
-#include "include/Entity.hpp"
+#include "../include/Entity.hpp"
 
 Entity::Entity(Vector2f p_pos, SDL_Texture* p_text, int p_frameCount, int p_frameWidth, int p_frameHeight)
     : pos(p_pos), text(p_text), frameCount(p_frameCount), frameWidth(p_frameWidth), frameHeight(p_frameHeight), 

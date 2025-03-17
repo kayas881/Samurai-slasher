@@ -1,4 +1,4 @@
-#include "include/TextureManager.hpp"
+#include "../include/TextureManager.hpp"
 #include <iostream>
 
 // Initialize the static texture map

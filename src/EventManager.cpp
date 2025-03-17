@@ -1,4 +1,4 @@
-#include "include/EventManager.hpp"
+#include "../include/EventManager.hpp"
 
 void EventManager::processEvents(bool& gameRunning, Player& player, DialogueSystem& dialogueSystem, std::vector<NPC>& npcs) {
     SDL_Event event;

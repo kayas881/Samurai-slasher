@@ -1,9 +1,9 @@
-#include "include/Enemy.hpp"
-#include "include/TextureManager.hpp"
+#include "../include/Enemy.hpp"
+#include "../include/TextureManager.hpp"
 #include <fstream>
 #include <iostream>
-#include "include/math.hpp"
-#include "include/utils.hpp"
+#include "../include/math.hpp"
+#include "../include/utils.hpp"
 
 // Constructor to initialize the enemy
 Enemy::Enemy(Vector2f p_pos, SDL_Renderer* renderer, const std::string& configPath)

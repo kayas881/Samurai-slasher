@@ -2,8 +2,8 @@
 #include <SDL_image.h>
 #include <stdio.h>
 #include <iostream>
-#include "include/RenderWindow.hpp"
-#include "include/Entity.hpp"
+#include "../include/renderWindow.hpp"
+#include "../include/Entity.hpp"
 
 RenderWindow::RenderWindow(const char *p_title, int p_w, int p_h)
     : window(NULL), renderer(NULL)

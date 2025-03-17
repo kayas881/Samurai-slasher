@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = main.o renderWindow.o Entity.o Player.o npc.o DialogueSystem.o TextureManager.o EventManager.o utils.o SpatialPartitioning.o Enemy.o
+OBJS = main.o src/renderWindow.o src/Entity.o src/Player.o src/npc.o src/DialogueSystem.o src/TextureManager.o src/EventManager.o src/utils.o src/SpatialPartitioning.o src/Enemy.o
 
 #CC specifies which compiler we're using
 CC = g++
